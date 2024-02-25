@@ -3,13 +3,14 @@
  * February 24, 2024
  * Lab 1: Jgraph
  *
- * This program visualizes hockey shots and goals.
+ * This program visualizes hockey shots and goals for current NHL teams.
  */
 
 #include <fstream>
 #include <regex>
 #include <set>
 #include <sstream>
+#include <vector>
 #include "nsm.h"
 using namespace std;
 
@@ -19,10 +20,10 @@ set<string> teams = {
   "ANA", "ARI", "BOS", "BUF", 
   "CAR", "CBJ", "CGY", "CHI", 
   "COL", "DAL", "DET", "EDM", 
-  "FLA", "LA",  "MIN", "MTL", 
-  "NJ",  "NSH", "NYI", "NYR", 
+  "FLA", "LAK", "MIN", "MTL", 
+  "NJD", "NSH", "NYI", "NYR", 
   "OTT", "PHI", "PIT", "SEA", 
-  "SJ",  "STL", "TB",  "TOR", 
+  "SJS", "STL", "TBL", "TOR", 
   "VAN", "VGK", "WPG", "WSH"
 };
 
@@ -32,11 +33,13 @@ regex date_format{ "....-..-.." };
 
 int main(int argc, char* argv[])
 {
-  string team_abbrev;    /* Abbreviation of the team being searched */
-  string date;           /* Date of the game being searched */
-  ostringstream oss;     /* For executing commands */
-  ifstream fin;          /* File stream */
-  int game_id;        /* Identifies the game being searched */
+  string team_abbrev;       /* Abbreviation of the team being searched */
+  string date;              /* Date of the game being searched */
+  ostringstream oss;        /* For executing commands */
+  ifstream fin;             /* Used to read json files */
+  int game_id;              /* Identifies the game being searched */
+  vector<Event*> events;    /* Info about the goals and shots that will be graphed */
+  ofstream fout;            /* Used to create Jgraph file */
 
   /* Read in and error check the team and game date */
 
@@ -58,10 +61,10 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  /* Obtain the game id to later get the game data */
+  /* Obtain the game id that will later be used to retrieve the game data */
 
   printf("Finding the game...\n");
-  oss << "curl -S -s -o games.json https://api-web.nhle.com/v1/schedule/" << date;
+  oss << "curl -S -s -o games.json https://api-web.nhle.com/v1/club-schedule/" << team_abbrev << "/week/" << date;
   system(oss.str().c_str());
 
   fin.open("games.json");
@@ -69,8 +72,8 @@ int main(int argc, char* argv[])
     printf("ERROR: Could not find any NHL games on %s\n", date.c_str());
     return 1;
   }
-
   game_id = find_game_id(fin, team_abbrev);
+  fin.close();
   if (game_id == -1) {
     printf("ERROR: %s did not have a game on %s\n", team_abbrev.c_str(), date.c_str());
     return 1;
@@ -78,5 +81,52 @@ int main(int argc, char* argv[])
   
   /* Obtain the game's play-by-play stats for shots and goals */
   
+  printf("Retrieving play-by-play information from the game...\n");
+  oss.str("");
+  oss << "curl -S -s -o play_by_play.json https://api-web.nhle.com/v1/gamecenter/" << game_id << "/play-by-play";
+  system(oss.str().c_str());
+
+  fin.open("play_by_play.json");
+  if (fin.fail()) {
+    printf("ERROR: Could not retrieve information from the game.\n");
+    return 1;
+  }
+  events = find_events(fin);
+  fin.close();
+  if (events.size() == 0) {
+    printf("ERROR: Could not retrieve information from the game.\n");
+    return 1;
+  }
+
+  /* Create the Jgraph file with info for plotting the rink, goals, and shots on goal */
+
+  printf("Graphing the goals and shots on goal...\n");
+  fin.open("rink.jgr");
+  if (fin.fail()) {
+    printf("ERROR: Could not create the hockey rink on which to plot the data.\n");
+    return 1;
+  }
+  fout.open("plot_shots.jgr");
+    if (fin.fail()) {
+    printf("ERROR: Could not create the Jgraph file with data.\n");
+    return 1;
+  }
+  create_graph(fin, fout, events);
+  fin.close();
+  fout.close();
+
+  /* Create the graph */
+
+  oss.str("");
+  oss << "./jgraph -P plot_shots.jgr | ps2pdf - | convert -density 300 - -quality 100 nhl_shot_map.jpg";
+  system(oss.str().c_str());
+
+  /* Remove temporary files */
+
+  printf("Removing temporary files...\n");
+  remove("games.json");
+  remove("play_by_play.json");
+  remove("plot_shots.jgr");
+  printf("Finished: Your NHL shot map (nhl_shot_map.jpg) has been created!\n");
   return 0;
 }
