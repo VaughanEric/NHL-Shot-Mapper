@@ -35,21 +35,24 @@ int main(int argc, char* argv[])
 {
   string team_abbrev;       /* Abbreviation of the team being searched */
   string date;              /* Date of the game being searched */
+  string output_file;       /* The file name of the resulting NHL shot map jpeg */
   ostringstream oss;        /* For executing commands */
   ifstream fin;             /* Used to read json files */
   int game_id;              /* Identifies the game being searched */
   vector<Event*> events;    /* Info about the goals and shots that will be graphed */
   ofstream fout;            /* Used to create Jgraph file */
+  size_t i;                 /* Iterator */
 
   /* Read in and error check the team and game date */
 
-  if (argc != 3) {
-    printf("usage: ./nsm [team-abbreviation] [date-of-game:(YYYY-MM-DD)]\n");
+  if (argc != 4) {
+    printf("usage: ./nsm [team-abbreviation] [date-of-game:(YYYY-MM-DD)] [output-file-name]\n");
     return 1;
   }
 
   team_abbrev = argv[1];
   date = argv[2];
+  output_file = argv[3];
 
   if (teams.find(team_abbrev) == teams.end()) {
     printf("ERROR: %s is not the abbreviation of an NHL team\n", team_abbrev.c_str());
@@ -118,15 +121,16 @@ int main(int argc, char* argv[])
   /* Create the graph */
 
   oss.str("");
-  oss << "./jgraph -P plot_shots.jgr | ps2pdf - | convert -density 300 - -quality 100 nhl_shot_map.jpg";
+  oss << "./jgraph -P plot_shots.jgr | ps2pdf - | convert -density 300 - -quality 100 " << output_file << ".jpg";
   system(oss.str().c_str());
 
-  /* Remove temporary files */
+  /* Remove temporary files and delete events */
 
-  printf("Removing temporary files...\n");
+  printf("Cleaning up...\n");
   remove("games.json");
   remove("play_by_play.json");
   remove("plot_shots.jgr");
-  printf("Finished: Your NHL shot map (nhl_shot_map.jpg) has been created!\n");
+  for (i = 0; i < events.size(); i++) delete events[i];
+  printf("Finished: Your NHL shot map (%s.jpg) has been created!\n", output_file.c_str());
   return 0;
 }
