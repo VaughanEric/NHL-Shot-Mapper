@@ -188,7 +188,8 @@ void create_graph(ifstream &fin, ofstream &fout, vector<Event*> events)
   fout << "newline marktype x color " << events[0]->color << " linetype none label : " << events[0]->team << " Shot on Goal\n";
   
   for (i = 0; i < events.size()-1 && events[i]->team == events[0]->team; i++);
-  event = events[i+1];
+
+  event = events[i];
 
   fout << "newline marktype circle color " << event->color << " linetype none label : " << event->team << " Goal\n";
   fout << "newline marktype x color " << event->color << " linetype none label : " << event->team << " Shot on Goal\n";
