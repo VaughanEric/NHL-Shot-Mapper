@@ -3,7 +3,7 @@
  * February 24, 2024
  * Lab 1: Jgraph
  *
- * This program visualizes hockey shots and goals for current NHL teams.
+ * This program visualizes goals and shots on goal from NHL games with current teams.
  */
 
 #include <fstream>
@@ -43,7 +43,7 @@ int main(int argc, char* argv[])
   ofstream fout;            /* Used to create Jgraph file */
   size_t i;                 /* Iterator */
 
-  /* Read in and error check the team and game date */
+  /* Read in check the team, game date, and output file name */
 
   if (argc != 4) {
     printf("usage: ./nsm [team-abbreviation] [date-of-game:(YYYY-MM-DD)] [output-file-name]\n");
@@ -54,6 +54,8 @@ int main(int argc, char* argv[])
   date = argv[2];
   output_file = argv[3];
 
+  /* Error check the team and game date */
+  
   if (teams.find(team_abbrev) == teams.end()) {
     printf("ERROR: %s is not the abbreviation of an NHL team\n", team_abbrev.c_str());
     return 1;
@@ -64,11 +66,13 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  /* Obtain the game id that will later be used to retrieve the game data */
+  /* Run curl to obtain the specified team's games from the week with the specified date */
 
   printf("Finding the game...\n");
   oss << "curl -S -s -o games.json https://api-web.nhle.com/v1/club-schedule/" << team_abbrev << "/week/" << date;
   system(oss.str().c_str());
+
+  /* Obtain the game id of the specific game being searched for */
 
   fin.open("games.json");
   if (fin.fail()) {
@@ -82,12 +86,14 @@ int main(int argc, char* argv[])
     return 1;
   }
   
-  /* Obtain the game's play-by-play stats for shots and goals */
+  /* Run curl to obtain the game's play-by-play events */
   
   printf("Retrieving play-by-play information from the game...\n");
   oss.str("");
   oss << "curl -S -s -o play_by_play.json https://api-web.nhle.com/v1/gamecenter/" << game_id << "/play-by-play";
   system(oss.str().c_str());
+
+  /* Obtain information about all events pertaining to goals and shots on goal */
 
   fin.open("play_by_play.json");
   if (fin.fail()) {
@@ -101,7 +107,7 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  /* Create the Jgraph file with info for plotting the rink, goals, and shots on goal */
+  /* Create the Jgraph file with information for plotting the rink, goals, and shots on goal */
 
   printf("Graphing the goals and shots on goal...\n");
   fin.open("rink.jgr");

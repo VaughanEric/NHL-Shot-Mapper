@@ -1,6 +1,6 @@
 using namespace std;
 
-/* Contains info about the goals and shots that will be graphed */
+/* Contains info about the goals and shots on goal that will be graphed */
 
 struct Event {
   string team;

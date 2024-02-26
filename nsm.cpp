@@ -44,7 +44,7 @@ map<int, string> abbrevs = {
   {55, "SEA"}
 };
 
-/* Maps the team name to its colors */
+/* Maps the id of a team to its colors */
 
 map<int, string> colors = {
   {1, "1 0 0"},
@@ -81,41 +81,6 @@ map<int, string> colors = {
   {55, "0 0.6 0.6"}
 };
 
-// map<string, string> colors = {
-//   {"NJD", "1 0 0"},
-//   {"NYI", "0 0 1"},
-//   {"NYR", "0 0 1"},
-//   {"PHI", "1 0.33 0"},
-//   {"PIT", "0 0 0"},
-//   {"BOS", "1 0.75 0.11"},
-//   {"BUF", "0 0.16 0.41"},
-//   {"MTL", "1 0 0"},
-//   {"OTT", "1 0 0"},
-//   {"TOR", "0 0 1"},
-//   {"CAR", "1 0 0"},
-//   {"FLA", "1 0 0"},
-//   {"TBL", "0 0 1"},
-//   {"WSH", "1 0 0"},
-//   {"CHI", "1 0 0"},
-//   {"DET", "1 0 0"},
-//   {"NSH", "1 0.75 0.11"},
-//   {"STL", "0 0 1"},
-//   {"CGY", "1 0 0"},
-//   {"COL", "0.51 0.16 0.24"},
-//   {"EDM", "1 0.33 0"},
-//   {"VAN", "0 0.16 0.41"},
-//   {"ANA", "1 0.33 0"},
-//   {"DAL", "0 0.6 0.28"},
-//   {"LAK", "0 0 0"},
-//   {"SJS", "0 0.6 0.6"},
-//   {"CBJ", "0 0.16 0.41"},
-//   {"MIN", "0 0.6 0.28"},
-//   {"WPG", "0 0.16 0.41"},
-//   {"ARI", "0.51 0.16 0.24"},
-//   {"VGK", "0.3 0.3 0.3"},
-//   {"SEA", "0 0.6 0.6"}
-// };
-
 /*
  * @name find_game_id.
  * @description Find the game id of the game being searched.
@@ -146,7 +111,6 @@ int find_game_id(ifstream &fin, string team_abbrev)
  * @name find_events.
  * @description Obtains info about the goals and shots that will be graphed.
  * @param[in] fin The json being read.
- * @param[in] game_id The id of the game being searched.
  * @return Info about the goals and shots that will be graphed.
  */
 vector<Event*> find_events(ifstream &fin)
@@ -171,7 +135,7 @@ vector<Event*> find_events(ifstream &fin)
     away_color = "0.3 0.3 0.3";
   }
 
-  /* Obtain info about the goals and shots that will be graphed */
+  /* Obtain info about the goals and shots on goal that will be graphed */
 
   plays = game_info["plays"];
   for (pit = plays.begin(); pit != plays.end(); pit++) {
@@ -218,7 +182,7 @@ void create_graph(ifstream &fin, ofstream &fout, vector<Event*> events)
     fout << "\npts " << event->x << " " << event->y << "\n\n";
   }
 
-  /* Create legend */
+  /* Create the legend */
 
   fout << "newline marktype circle color " << events[0]->color << " linetype none label : " << events[0]->team << " Goal\n";
   fout << "newline marktype x color " << events[0]->color << " linetype none label : " << events[0]->team << " Shot on Goal\n";
